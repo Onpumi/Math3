@@ -37,6 +37,23 @@ using DG.Tweening;
 	    public event UnityAction<PlayItem> mouseMove;
 		public event UnityAction<PlayItem,PlayItem> OnSwapItems;
 	    public event UnityAction<PlayItem> OnMoveItem;
+		public event UnityAction<PlayItem> CutItem;
+
+	  private void OnEnable()
+	  {
+
+	  }
+
+	  private void OnDisable()
+	  {
+
+	  }
+
+	  public void AnimationCut()
+	  {
+		CutItem?.Invoke(this);
+	  }
+
 
 	  public void ReadyNewPosition( int column, int row)
 	{
@@ -112,7 +129,7 @@ using DG.Tweening;
 	  public void MarkForRemove( bool value )
 	 {
 	    _isRemove = value;
-		SetTransparent(0.0f);
+		//SetTransparent(0.5f);
 		//this.transform.gameObject.SetActive(false);
 	 }
 

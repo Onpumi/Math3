@@ -6,18 +6,27 @@ using DG.Tweening;
 public class AnimationItem : MonoBehaviour
 {
      [SerializeField] private MoveItem _moveitem;
+
                       private const int countMaxSwap = 2;
 
       private void OnEnable()
     {
         _moveitem.OnSwapItems+=DoSwapItem;
         _moveitem.OnMoveItem+=MoveItem;
+        _moveitem.CutItem+=PlayCut;
+
     }
     
      private void OnDisable()
     {
         _moveitem.OnSwapItems-=DoSwapItem;
         _moveitem.OnMoveItem-=MoveItem;
+        _moveitem.CutItem-=PlayCut;
+    }
+
+    private void PlayCut(PlayItem item)
+    {
+      item.SetTransparent(0.5f);
     }
 
     private void DoSwapItem(PlayItem firstItem, PlayItem secondItem)
@@ -54,7 +63,7 @@ public class AnimationItem : MonoBehaviour
           .SetEase(Ease.Linear)
           .OnComplete(() =>
           {
-            //  _moveitem._destroyItem.DestroyIt();
+            
           });
        }
     }
