@@ -18,6 +18,7 @@ public class MoveItem : MonoBehaviour
 	private PlayItem _secondItem;
 	private int _stepMove = (int)StatesMove.Stop;
 	private float _countCells;
+	private bool isAnimation = false;
 	private bool _isUpdateItem = false;
 	private bool _isTestDelete = false;
 	public int statusMove => _stepMove;	
@@ -57,8 +58,6 @@ public class MoveItem : MonoBehaviour
 		 _items[i,j].mouseMove -= MoveElement;
 	   }
 	}
-
-
 	
 	private void Init(PlayItem[,] items)
 	{
@@ -67,7 +66,6 @@ public class MoveItem : MonoBehaviour
 
 	private void PressItem(PlayItem item)
 	{ 
-
 		if( blockInput ) return;
 
 		if( _firstItem.change == 0 )
@@ -185,12 +183,13 @@ public class MoveItem : MonoBehaviour
 			for(int i = 0 ; i < countSizeItem ; i++)
 			{
 			   itemsForDelete[i].MarkForRemove( true );
+			   itemsForDelete[i].SetTransparent(0.5f);
 			}
 		}
 		return isRemove;
 	}
 
-	 	private bool DeleteIdenticalAll( PlayItem item )
+	 	private bool CutIdenticalItems( PlayItem item )
 	{
 		int row = item.indexRow;
 		int column = item.indexColumn;
@@ -200,13 +199,40 @@ public class MoveItem : MonoBehaviour
 		return DeleteSeveralItems( itemsHorizontal, column ) | DeleteSeveralItems( itemsVertical, row );
 	}
 
+	IEnumerator FullCutIdenticalItems()
+	{
+		bool resultCut = false;
+		int count = 0;
+		do 
+		{
+		  for( int i = 0 ; i < _items.GetLength(0); i++ )
+		  {
+		    for( int j = 0 ; j < _items.GetLength(1); j++ )
+		    {
+		  	    var TestDelete = CutIdenticalItems( _items[i,j] );
+				yield return new WaitForSeconds(Time.deltaTime);
+				if( TestDelete ) 
+				{
+					_items[i,j].MarkForRemove( true );
+					_items[i,j].SetTransparent(0.5f);
+				}
+				resultCut |= TestDelete;
+		    }
+		  }
+		  UpdateItems();
+		  
+		} while( resultCut );
+	}
+
     private bool RemoveItemsDo( PlayItem item )
 	{
-		_isTestDelete = DeleteIdenticalAll( item );
+		_isTestDelete = CutIdenticalItems( item );
 		if( _isTestDelete )
 		{
+			
 		   item.MarkForRemove( true );
 		   UpdateItems();
+		   StartCoroutine(FullCutIdenticalItems());
 	    }
 		else
 		{
@@ -233,8 +259,6 @@ public class MoveItem : MonoBehaviour
 		
 	}
 
-
-
 	private void MoveNewPositionItem( PlayItem[,] gridItems, PlayItem item, int column, int row )
 	{
 		item.ReadyNewPosition(column,row);
@@ -247,8 +271,8 @@ public class MoveItem : MonoBehaviour
 		buffItem = gridItems[column,row];
 		gridItems[column,row] = gridItems[column2,row2];
 		gridItems[column2,row2] = buffItem;
+		//yield return new WaitForSeconds(Time.deltaTime);
 	}
-
 
 	public void DestroyEmptyItems()
 	{
@@ -260,19 +284,15 @@ public class MoveItem : MonoBehaviour
 			}
 		}
 	}
-	
-
 
 	private void FallSpawnItems( PlayItem[,] gridItems, PlayItem item, int column, int row)
 	{
 		gridItems[column,row].transform.gameObject.SetActive(false);
 		gridItems[column,row].name = "empty";
-
 		gridItems[column,row] = item;
 		gridItems[column,row].SetIndexes(column,row);
 		gridItems[column,row].ReadyNewPosition(column,row);
 		OnMoveItem?.Invoke(gridItems[column,row]);
-	
 	}
 
 
@@ -297,19 +317,13 @@ public class MoveItem : MonoBehaviour
 	     return itemObject;
 	}
 
-
     private void CreateNewItems( PlayItem[] items, int spawnColumn, int countEmptyItems )
 	{
 		PlayItem[] spawnItems = new PlayItem[countEmptyItems];
 		Vector3 startPosition = _gridItem.startPosition;
 		Vector3 createPosition = startPosition;
-
-				
 		var scaleItem = new Vector2(_gridItem.sizeCellX, _gridItem.sizeCellY);
 		
-		//createPosition = new Vector3(_gridItem.sizeCellX, _gridItem.sizeCellY + scaleItem.y, 0 );
-		//createPosition = new Vector3(0,0,0);
-
 		for( int j = 0 ; j < countEmptyItems ; j++ )
 		{
 			var spawnRow = countEmptyItems - 1 -j;			
@@ -323,14 +337,9 @@ public class MoveItem : MonoBehaviour
 			spawnItems[j].mouseDown += PressItem;
 			spawnItems[j].mouseMove += MoveElement;
 			FallSpawnItems( _items, spawnItems[j], spawnColumn, spawnRow);
-			
-			//Debug.Log(seq.Count);
-
-			//Thread.Sleep(500);
 		}
 
 	}
-
 
 	private void MoveSetFullItem( PlayItem firstItem, PlayItem secondItem )
 	{
@@ -338,19 +347,12 @@ public class MoveItem : MonoBehaviour
 		 OnMoveItem?.Invoke(firstItem);
 	}
 
-
-
-
     private void UpdateItems()
 	{
 		for(int i = 0 ; i < _items.GetLength(0); i++ )
 		{
-			
 			PlayItem[] items = Enumerable.Range(0,_items.GetLength(1)).Select(x => _items[i,x]).ToArray();
-			
 			var countOffset = 0;
-
-
 			int indexFirstEmpty = 0;
 			int indexLastEmpty = 0;
 			int indexFirstFull = 0;
@@ -365,8 +367,7 @@ public class MoveItem : MonoBehaviour
 				  NumExitWhile++;
 				  if(NumExitWhile > 1000) 
 				{ 
-					
-					Debug.Log($"NumExitWhile {NumExitWhile}   i = {i}  countEmpty = {countEmpty} countFull = {countFull}"); return; 
+					//Debug.Log($"NumExitWhile {NumExitWhile}   i = {i}  countEmpty = {countEmpty} countFull = {countFull}"); return; 
 					Debug.Log($"indexFirstFull={indexFirstFull} indexLastFull={indexLastFull}");
 				}
 
@@ -385,6 +386,10 @@ public class MoveItem : MonoBehaviour
 					if( items[j-1].isRemove == true ) 
 					{
 					   indexFirstFull = j;
+					   if( j-1 == 0 ) 
+					   {
+					     countEmpty = 1;
+					   }
 					}
 					if( ( j < items.Length-1 && items[j+1].isRemove == true)  )
 					{
@@ -419,16 +424,17 @@ public class MoveItem : MonoBehaviour
 
 						if(countEmpty > 0)
 						{
+						//Debug.Log($"countEmpty={countEmpty} indexLastFull={indexLastFull} indexFirstFull={indexFirstFull} indexFirstEmpty={indexFirstEmpty} indexLastEmpty={indexLastEmpty} j={j}");
 					   	    while( indexLastFull >= 0 )
 					       {
 						     if(items[indexLastFull].transform.gameObject.activeSelf)
 						    {
 						  	   MoveNewPositionItem( _items, items[indexLastFull], i, indexLastEmpty);
-						       indexLastEmpty--;
+								
+							   indexLastEmpty--;
 						     }
 						     indexLastFull--;
 					       }
-						 
 						}
 					}
 					//Debug.Log($"countEmpty={countEmpty} indexLastFull={indexLastFull} indexFirstFull={indexFirstFull} indexFirstEmpty={indexFirstEmpty} indexLastEmpty={indexLastEmpty} j={j}");
@@ -437,13 +443,11 @@ public class MoveItem : MonoBehaviour
 	    	}
 			if( countEmpty > 0 ) 
 			{
-				//Debug.Log(countStartEmpty);
-			CreateNewItems( items, i, countEmpty );
+			  CreateNewItems( items, i, countEmpty );
 			}
 		}
-
+		//yield return new WaitForSeconds(1f);
 	}
-
 
      public void StartSwap()
     {
@@ -464,9 +468,8 @@ public class MoveItem : MonoBehaviour
     {
 	   int column   = _secondItem.indexColumn;
 	   int row      = _secondItem.indexRow;
-
-	  ResetItem();  
- 	  ReplaceItem(_firstItem,_secondItem);
+ 	   ResetItem();  
+ 	   ReplaceItem(_firstItem,_secondItem);
 	   _isTestDelete = RemoveItemsDo( _firstItem );
 	  if( _isTestDelete ) 
 	  {
