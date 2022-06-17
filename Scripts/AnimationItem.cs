@@ -51,6 +51,7 @@ public class AnimationItem : MonoBehaviour
     {
        if( item )  
        {
+        _moveitem.EnableAnimation();
         DOTween.Sequence()
           .AppendCallback(() =>
           {
@@ -63,7 +64,7 @@ public class AnimationItem : MonoBehaviour
           .SetEase(Ease.Linear)
           .OnComplete(() =>
           {
-            
+            _moveitem.DisableAnimation();
           });
        }
     }

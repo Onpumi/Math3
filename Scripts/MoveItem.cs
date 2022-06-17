@@ -14,8 +14,10 @@ public class MoveItem : MonoBehaviour
 	[SerializeField] private Items _gridItem;
 	[SerializeField] private Transform _parentSpawnItems;
 	private PlayItem[,] _items;
+	private PlayItem[,] spawnItems;
 	private PlayItem _firstItem;
 	private PlayItem _secondItem;
+	private int[] _countEmptyItems;
 	private int _stepMove = (int)StatesMove.Stop;
 	private float _countCells;
 	private bool isAnimation = false;
@@ -25,6 +27,7 @@ public class MoveItem : MonoBehaviour
 	public bool isUpdateItem => _isUpdateItem;
 	public float countCells => _countCells;
 	private bool _isBlock = false;
+	private bool _isAnimation = false;
 	public PlayItem _destroyItem;
 	public bool blockInput => _isBlock;
 
@@ -37,6 +40,8 @@ public class MoveItem : MonoBehaviour
 	{
 	   _countCells = _gridItem.countCells;
 	   _items = _gridItem._playItems;
+
+	   	spawnItems = new PlayItem[(int)_countCells,(int)_countCells];
 
 	  for( int j = 0 ; j < _countCells; j++ )	   
 	  {
@@ -65,9 +70,20 @@ public class MoveItem : MonoBehaviour
 		_items = items;
 	}
 
+	public void EnableAnimation()
+	{
+		_isAnimation = true;
+	}
+		public void DisableAnimation()
+	{
+		_isAnimation = false;
+	}
+
+
 	private void PressItem(PlayItem item)
 	{ 
 		if( blockInput ) return;
+		if( _isAnimation == true ) return;
 
 		if( _firstItem.change == 0 )
 	   { 
@@ -88,7 +104,6 @@ public class MoveItem : MonoBehaviour
 	   }
 	}
 
-
 	 private void MoveElement( PlayItem item )
 	{ 
 		
@@ -98,15 +113,18 @@ public class MoveItem : MonoBehaviour
 		var j = item.indexRow;
 		//Debug.Log($"Индексы элемента {item.indexColumn},{item.indexRow}  Его имя {item.name} Его координаты {item.transform.position.x}, {item.transform.position.y}  IsRemove={item.isRemove}");
 
-		if( _firstItem.change == 1 && _firstItem != item   ) 
+		if( _firstItem.change == 1 && _firstItem != item  && isAnimation == false ) 
 	   {
-		   _secondItem = item;
-		   _secondItem.SetChange(2);
-		   _firstItem.SetChange(1);
-			if(ItNeighboor( _firstItem, _secondItem ) && _secondItem.change == 1 + _firstItem.change) 
+			if(ItNeighboor( _firstItem, item )) 
 			{
+			   _secondItem = item;
+			   _secondItem.SetChange(2);
+ 	 	       _firstItem.SetChange(1);
+			   if(_secondItem.change == 1 + _firstItem.change)
+			   {
 			    StartSwap();
 				TrySwapNeighboor();
+			   }
 		    }
 	   }
 	}
@@ -135,7 +153,6 @@ public class MoveItem : MonoBehaviour
 	  {
 		if( _firstItem.isMove == false && _secondItem.isMove == false )
 		{
-		  //BlockItems(true);
 		  GoSwapNeighboor();
 		}
 	  }
@@ -184,7 +201,7 @@ public class MoveItem : MonoBehaviour
 			for(int i = 0 ; i < countSizeItem ; i++)
 			{
 			   itemsForDelete[i].MarkForRemove( true );
-			   CutItem?.Invoke(itemsForDelete[i]);
+			  // CutItem?.Invoke(itemsForDelete[i]);
 			}
 		}
 		return isRemove;
@@ -212,8 +229,8 @@ public class MoveItem : MonoBehaviour
 		  	    TestDelete = CutIdenticalItems( _items[i,j] );
 				if( TestDelete ) 
 				{
-					_items[i,j].MarkForRemove( true );
-					CutItem?.Invoke(_items[i,j]);
+					//_items[i,j].MarkForRemove( true );
+					//CutItem?.Invoke(_items[i,j]);
 				}
 				isFindItemCut |= TestDelete;
 		    }
@@ -221,22 +238,45 @@ public class MoveItem : MonoBehaviour
 		return isFindItemCut;
 	}
 
+
+	void EffectRemove( PlayItem[] items )
+	{
+		for( int i = 0 ; i < items.Length ; i++ )
+		{
+			if( items[i].isRemove )
+			{
+		     CutItem?.Invoke(items[i]);
+			}
+		}
+	}
+
     IEnumerator ProcessingCycleItems( PlayItem item )
 	{
 
 		_isTestDelete = CutIdenticalItems( item );
-		
+
+				
 		if( _isTestDelete )
 		{
-   		   item.MarkForRemove( true );
+   		   
+		  // item.MarkForRemove( true );
 		   bool isContinue = false;
 		   do
 		   {
-			  isContinue = FullCutIdenticalItems();
-			  yield return new WaitForSeconds(1.5f);	  
-			  UpdateItems();
+			   isContinue = FullCutIdenticalItems();
+			   yield return new WaitForSeconds(1.5f);
+  		      _countEmptyItems = new int[_items.GetLength(0)];
+  	 	       for(int i = 0 ; i < _items.GetLength(0); i++ )
+		      {
+				PlayItem[] items = Enumerable.Range(0,_items.GetLength(1)).Select(x => _items[i,x]).ToArray();
+			    MoveDownItems(items, i);
+				//EffectRemove(items);
+				//yield return new WaitForSeconds(1.5f);
+			    CreateNewItems( items, i, _countEmptyItems[i] );
+			  }
+   			  FallSpawnItems( _items, spawnItems);
 		   }while(isContinue);
-		   yield return new WaitForSeconds(1.5f);	
+		   isAnimation = false;
 	    }
 		else
 		{
@@ -285,14 +325,21 @@ public class MoveItem : MonoBehaviour
 		}
 	}
 
-	private void FallSpawnItems( PlayItem[,] gridItems, PlayItem item, int column, int row)
+	private void FallSpawnItems( PlayItem[,] gridItems, PlayItem[,] spawnItems)
 	{
-		gridItems[column,row].transform.gameObject.SetActive(false);
-		gridItems[column,row].name = "empty";
-		gridItems[column,row] = item;
-		gridItems[column,row].SetIndexes(column,row);
-		gridItems[column,row].ReadyNewPosition(column,row);
-		OnMoveItem?.Invoke(gridItems[column,row]);
+      for(int i = 0 ; i < gridItems.GetLength(0); i++ )
+      {
+		  for( int j = 0 ; j < _countEmptyItems[i] ; j++ )
+	    {
+			var spawnRow = _countEmptyItems[i] - 1 -j;			
+ 	 	    gridItems[i,spawnRow].transform.gameObject.SetActive(false);
+ 		    gridItems[i,spawnRow].name = "empty";
+		    gridItems[i,spawnRow] = spawnItems[i,j];
+		    gridItems[i,spawnRow].SetIndexes(i,spawnRow);
+		    gridItems[i,spawnRow].ReadyNewPosition(i,spawnRow);
+		    OnMoveItem?.Invoke(gridItems[i,spawnRow]);
+		}
+	  }
 	}
 
      private GameObject RandomNewItem( Transform parentItems )
@@ -316,7 +363,7 @@ public class MoveItem : MonoBehaviour
 
     private void CreateNewItems( PlayItem[] items, int spawnColumn, int countEmptyItems )
 	{
-		PlayItem[] spawnItems = new PlayItem[countEmptyItems];
+	//	spawnItems[spawnColumn] = new PlayItem[countEmptyItems];
 		Vector3 startPosition = _gridItem.startPosition;
 		Vector3 createPosition = startPosition;
 		var scaleItem = new Vector2(_gridItem.sizeCellX, _gridItem.sizeCellY);
@@ -327,47 +374,29 @@ public class MoveItem : MonoBehaviour
 			createPosition.y += scaleItem.y;
 		    createPosition.x = items[j].transform.position.x;
 			var itemObject = CreateItem(createPosition);
-		    spawnItems[j] = itemObject.GetComponent<PlayItem>() as PlayItem;
-			spawnItems[j].SetState(spawnColumn, spawnRow, _gridItem.sizeCellX, _gridItem.sizeCellY, _gridItem.positionCells);
-			Vector3 spawnPositionItem = spawnItems[j].transform.localPosition;
+		    spawnItems[spawnColumn,j] = itemObject.GetComponent<PlayItem>() as PlayItem;
+			spawnItems[spawnColumn,j].SetState(spawnColumn, spawnRow, _gridItem.sizeCellX, _gridItem.sizeCellY, _gridItem.positionCells);
+			Vector3 spawnPositionItem = spawnItems[spawnColumn,j].transform.localPosition;
 			spawnPositionItem.y -= scaleItem.y * countEmptyItems;
-			spawnItems[j].mouseDown += PressItem;
-			spawnItems[j].mouseMove += MoveElement;
-			FallSpawnItems( _items, spawnItems[j], spawnColumn, spawnRow);
+			spawnItems[spawnColumn,j].mouseDown += PressItem;
+			spawnItems[spawnColumn,j].mouseMove += MoveElement;
+		//	FallSpawnItems( _items, spawnItems[j], spawnColumn, spawnRow);
 		}
 
 	}
 
-	private void MoveSetFullItem( PlayItem firstItem, PlayItem secondItem )
+    private void MoveDownItems( PlayItem[] items, int i )
 	{
-		 firstItem.SetTarget(secondItem);
-		 OnMoveItem?.Invoke(firstItem);
-	}
-
-    private void UpdateItems()
-	{
-		for(int i = 0 ; i < _items.GetLength(0); i++ )
-		{
-			PlayItem[] items = Enumerable.Range(0,_items.GetLength(1)).Select(x => _items[i,x]).ToArray();
 			var countOffset = 0;
 			int indexFirstEmpty = 0;
 			int indexLastEmpty = 0;
 			int indexFirstFull = 0;
 			int indexLastFull = 0;
-			int countEmpty = 0;
 			int countFull = 0;
 			var j = 0;
-			int NumExitWhile = 0;
 			
 			   while( j < items.Length) 
 			{
-				  NumExitWhile++;
-				  if(NumExitWhile > 1000) 
-				{ 
-					//Debug.Log($"NumExitWhile {NumExitWhile}   i = {i}  countEmpty = {countEmpty} countFull = {countFull}"); return; 
-					Debug.Log($"indexFirstFull={indexFirstFull} indexLastFull={indexLastFull}");
-				}
-
 				if( j == 0 && items[j].isRemove == true )
 				{
 					 j++;
@@ -385,7 +414,7 @@ public class MoveItem : MonoBehaviour
 					   indexFirstFull = j;
 					   if( j-1 == 0 ) 
 					   {
-					     countEmpty = 1;
+						 _countEmptyItems[i] = 1;
 					   }
 					}
 					if( ( j < items.Length-1 && items[j+1].isRemove == true)  )
@@ -404,22 +433,22 @@ public class MoveItem : MonoBehaviour
 					{
 						indexLastEmpty = j;
 					}
-					if(  (j < items.Length-1 && items[j+1].isRemove == false) || j == items.Length-1  )  // тут ругается на нуль если j>Length, нужно передеать!
+					if(  (j < items.Length-1 && items[j+1].isRemove == false) || j == items.Length-1  )  
 					{
 					   indexLastEmpty = j;
 					   if( indexLastFull > 0 )
 					   {
-					     countEmpty = indexLastEmpty - indexLastFull;
+						 _countEmptyItems[i] = indexLastEmpty - indexLastFull;
 					   }
 					   else if( indexLastFull == 0 )
 					   {
-						 countEmpty = indexLastEmpty + 1;
+						 _countEmptyItems[i] = indexLastEmpty + 1;
 					   }
 					   countFull = 1 + indexLastFull - indexFirstFull;
 					   var saveIndexLastFull = indexLastFull;
 					   var saveIndexLastEmpty = indexLastEmpty;
 
-						if(countEmpty > 0)
+					    if( _countEmptyItems[i] > 0 )
 						{
 					   	    while( indexLastFull >= 0 )
 					       {
@@ -436,11 +465,6 @@ public class MoveItem : MonoBehaviour
 				}
 				j++;
 	    	}
-			if( countEmpty > 0 ) 
-			{
-			  CreateNewItems( items, i, countEmpty );
-			}
-		}
 	}
 
      public void StartSwap()
