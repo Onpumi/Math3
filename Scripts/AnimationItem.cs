@@ -64,6 +64,10 @@ public class AnimationItem : MonoBehaviour
           .SetEase(Ease.Linear)
           .OnComplete(() =>
           {
+          //  if( item.isRemove )
+          //  {
+           //   item.SetTransparent(0.5f);
+           // }
             _moveitem.DisableAnimation();
           });
        }

@@ -24,6 +24,7 @@ using DG.Tweening;
 		private float _stepHorizontal;
 		private float _stepVertical;
 		private Vector3[,] _gridMatrix;
+		public Vector3[,] positionCells => _gridMatrix;
 		public  bool isRemove => _isRemove;
 		public bool isDestroy => _isDestroy;
 		public int change => _statusChange;
@@ -37,7 +38,7 @@ using DG.Tweening;
 	    public event UnityAction<PlayItem> mouseMove;
 		public event UnityAction<PlayItem,PlayItem> OnSwapItems;
 	    public event UnityAction<PlayItem> OnMoveItem;
-		public event UnityAction<PlayItem> CutItem;
+		//public event UnityAction<PlayItem> CutItem;
 
 	  private void OnEnable()
 	  {
@@ -49,10 +50,7 @@ using DG.Tweening;
 
 	  }
 
-	  public void AnimationCut()
-	  {
-		CutItem?.Invoke(this);
-	  }
+	
 
 
 	  public void ReadyNewPosition( int column, int row)
@@ -129,7 +127,7 @@ using DG.Tweening;
 	  public void MarkForRemove( bool value )
 	 {
 	    _isRemove = value;
-		//SetTransparent(0.5f);
+		//SetTransparent(0.0f);
 		//this.transform.gameObject.SetActive(false);
 	 }
 
