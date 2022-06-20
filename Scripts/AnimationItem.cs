@@ -47,7 +47,7 @@ public class AnimationItem : MonoBehaviour
   	   });
     }
 
-    private void MoveItem(PlayItem item)
+    private void MoveItem( PlayItem item, PlayItem emptyItem )
     {
        if( item )  
        {
@@ -60,14 +60,15 @@ public class AnimationItem : MonoBehaviour
               item.transform.localPosition = new Vector3(item.transform.localPosition.x, item.transform.localPosition.y, 10);
             }
           })
-          .Join(item.transform.DOLocalMove(item.target,0.8f))
-          .SetEase(Ease.Linear)
+          .Join(item.transform.DOLocalMove(item.target,0.2f))
+         // .SetEase(Ease.Linear)
+          .SetEase(Ease.InQuart)
           .OnComplete(() =>
           {
-          //  if( item.isRemove )
-          //  {
-           //   item.SetTransparent(0.5f);
-           // }
+            if( emptyItem )
+            {
+              Destroy(emptyItem.transform.gameObject);
+            }
             _moveitem.DisableAnimation();
           });
        }

@@ -38,7 +38,6 @@ using DG.Tweening;
 	    public event UnityAction<PlayItem> mouseMove;
 		public event UnityAction<PlayItem,PlayItem> OnSwapItems;
 	    public event UnityAction<PlayItem> OnMoveItem;
-		//public event UnityAction<PlayItem> CutItem;
 
 	  private void OnEnable()
 	  {
@@ -55,12 +54,6 @@ using DG.Tweening;
 
 	  public void ReadyNewPosition( int column, int row)
 	{
-		//if( column < 0 || row < 0 || column > _gridMatrix.GetLength(0)|| row > _gridMatrix.GetLength(1)) 
-		//{
-			//Debug.Log($"исключение ReadyNewPosition _gridMatrix  column:{column} row:{row}");
-			//return;
-		//}
-
 		_target = _gridMatrix[column,row];
 	}
       public void SetState( int column, int row, float sizeCellX, float sizeCellY, Vector3[,] positionCells )
