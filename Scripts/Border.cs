@@ -61,7 +61,7 @@ public class Border : MonoBehaviour
 	   CreateItemRight();
    }
      public void DestroyThis()
-   {
+  {
 	   for( int i = 0 ; i < _frame.Count; i++ ) Destroy(_frame[i]);
    }
  }

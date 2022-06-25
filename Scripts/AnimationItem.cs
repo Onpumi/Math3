@@ -6,9 +6,10 @@ using DG.Tweening;
 public class AnimationItem : MonoBehaviour
 {
      [SerializeField] private MoveItem _moveitem;
+                      private Sequence posSeq;
 
                       private const int countMaxSwap = 2;
-
+   
       private void OnEnable()
     {
         _moveitem.OnSwapItems+=DoSwapItem;
@@ -31,7 +32,7 @@ public class AnimationItem : MonoBehaviour
 
     private void DoSwapItem(PlayItem firstItem, PlayItem secondItem)
     {
-        Sequence posSeq;
+        _moveitem.freezeControlPlay();
         posSeq = DOTween.Sequence();
         posSeq
          .AppendCallback(() =>
@@ -51,7 +52,6 @@ public class AnimationItem : MonoBehaviour
     {
        if( item )  
        {
-        _moveitem.EnableAnimation();
         DOTween.Sequence()
           .AppendCallback(() =>
           {
@@ -61,7 +61,6 @@ public class AnimationItem : MonoBehaviour
             }
           })
           .Join(item.transform.DOLocalMove(item.target,0.2f))
-         // .SetEase(Ease.Linear)
           .SetEase(Ease.InQuart)
           .OnComplete(() =>
           {
@@ -69,7 +68,6 @@ public class AnimationItem : MonoBehaviour
             {
               Destroy(emptyItem.transform.gameObject);
             }
-            _moveitem.DisableAnimation();
           });
        }
     }

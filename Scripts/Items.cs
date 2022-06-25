@@ -14,39 +14,43 @@ public class Items : MonoBehaviour
 	   private Vector3 _currentPos;
 	   private float _sizeGrid;
 	   private float _countCells; 
-   	   private Vector2  _scale;
+   	   private Vector2  _scaleItem;
 	   private float _deltaField = 0.5f;
 	   public Vector3[,] positionCells => _positionCells;
-	   public float sizeCellX => (_scaleSprite.x * scaleItem.x);
-	   public float sizeCellY => (_scaleSprite.y * scaleItem.y);
-	   public  Vector2 scaleItem => _scale;
+	   public float sizeCellX => (_scaleSprite.x * _scaleItem.x);
+	   public float sizeCellY => (_scaleSprite.y * _scaleItem.y);
 	   public float countCells => _countCells;
 	   public float sizeGrid => _sizeGrid;
 	   public Transform parentItem => _parentItem;
 	   public Vector2 scaleSprite => _scaleSprite;
 	   public Vector3 startPosition => _startPosition;
 
+	   private Vector2 GetScaleSprite
+         ( Vector2 scaleSprite, Vector2 scaleItem, float sizeBorder, float numberColumn,
+		   float numberRow )  
+	    { 
+			  scaleSprite = new Vector2(1f,1f);
+			  scaleSprite.x = (sizeBorder - _deltaField) / (numberColumn * scaleItem.x);
+	          scaleSprite.y = (sizeBorder - _deltaField) / (numberRow * scaleItem.y);
+			return scaleSprite;
+	    }
+
 	  public void Init( float sizeBorder, Vector2 positionItem, float countCells )
 	{
-		  CanvasScaler canvasScaler = _parentItem.gameObject.GetComponent<CanvasScaler>();
+		 CanvasScaler canvasScaler = _parentItem.gameObject.GetComponent<CanvasScaler>();
 		 var referencePixelsPerUnit = canvasScaler.referencePixelsPerUnit;
 		 var scaleIndex = referencePixelsPerUnit;
 	    _startPosition = positionItem;
-	    _scaleSprite = new Vector2(1f,1f);
-		 _scale = new Vector2(scaleIndex,scaleIndex);
- 	    _scaleSprite.x *= scaleItem.x;  
-   	    _scaleSprite.y *= scaleItem.y;  
+		 _scaleItem = new Vector2(scaleIndex,scaleIndex);
 	    _countCells = countCells;
-	    _scaleSprite.x = (sizeBorder - _deltaField) / (_countCells * scaleItem.x);
-	    _scaleSprite.y = (sizeBorder - _deltaField) / (_countCells * scaleItem.y);
-	   _sizeGrid = _countCells * _scaleSprite.x * scaleItem.x ;
-	   _startPosition.x -= _sizeGrid / 2 - _scaleSprite.x * scaleItem.x / 2;
-	   _startPosition.y += _sizeGrid / 2 - _scaleSprite.y * scaleItem.y / 2;
+        _scaleSprite = GetScaleSprite( _scaleSprite, _scaleItem, sizeBorder, 
+		                               countCells, countCells );   
+	   _sizeGrid = _countCells * _scaleSprite.x * _scaleItem.x ;
+	   _startPosition.x -= _sizeGrid / 2 - _scaleSprite.x * _scaleItem.x / 2;
+	   _startPosition.y += _sizeGrid / 2 - _scaleSprite.y * _scaleItem.y / 2;
 	   _currentPos = _startPosition;
 	   _playItems = new PlayItem[(int)_countCells, (int)_countCells];
 	   _positionCells = new Vector3[(int)_countCells, (int)_countCells];
-
-	   
 	   
 	   for( int j = 0; j < _countCells ; j++)
 	  {
@@ -56,9 +60,9 @@ public class Items : MonoBehaviour
          {  
 			_playItems[i,j] = CreateItem( _parentItem, _currentPos, _scaleSprite, i, j );
 			_positionCells[i,j] = _playItems[i,j].transform.localPosition;
-	        _currentPos.x += (_scaleSprite.x * scaleItem.x);
+	        _currentPos.x += (_scaleSprite.x * _scaleItem.x);
 	     }
-	     _currentPos.y -= (_scaleSprite.y * scaleItem.y);
+	     _currentPos.y -= (_scaleSprite.y * _scaleItem.y);
 	  }
 
 	}
@@ -76,7 +80,6 @@ public class Items : MonoBehaviour
 		 var nameObject = randomItemObject.name;
 		 var itemObject = Instantiate(  randomItemObject, positionItem, Quaternion.identity);
 		 itemObject.transform.localPosition = positionItem;
-		 //itemObject.transform.position = positionItem;
 		 itemObject.transform.SetParent(this.transform);
 		 itemObject.transform.localScale = scaleItem;
 		 PlayItem playItem = itemObject.GetComponent<PlayItem>() as PlayItem;

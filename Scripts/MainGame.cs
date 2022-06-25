@@ -19,8 +19,8 @@ public class MainGame : MonoBehaviour
 	  var sizeScreen = camera.orthographicSize;
 	  Screen.orientation = ScreenOrientation.Portrait;
 	  _sizeBorder = sizeScreen;
-  	  var _Border = new Border( _borderHorizontal, _borderVertical, _positionField, (int)sizeScreen , 0.1f, _colorBorder);
-      _Border?.Create();
+  	//  var _Border = new Border( _borderHorizontal, _borderVertical, _positionField, (int)sizeScreen , 0.1f, _colorBorder);
+    //  _Border?.Create();
      _items.Init( _sizeBorder, positionField, _countItems );
     }
 
