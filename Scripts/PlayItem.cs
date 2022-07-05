@@ -24,6 +24,7 @@ using DG.Tweening;
 		private float _stepHorizontal;
 		private float _stepVertical;
 		private Vector3[,] _gridMatrix;
+		private Material _material;
 		public Vector3[,] positionCells => _gridMatrix;
 		public  bool isRemove => _isRemove;
 		public bool isDestroy => _isDestroy;
@@ -49,7 +50,11 @@ using DG.Tweening;
 
 	  }
 
-	
+	  private void Awake()
+	  {
+		
+	  }
+
 
 
 	  public void ReadyNewPosition( int column, int row)
@@ -119,6 +124,8 @@ using DG.Tweening;
 	    Color.a = delta;
 		Color.a = Mathf.Clamp(Color.a,0,1);
 		_image.color = Color;
+		_material = _image.material;
+		_material.SetColor("_Color",Color);
 	 }
 
 	  
@@ -126,8 +133,6 @@ using DG.Tweening;
 	  public void MarkForRemove( bool value )
 	 {
 	    _isRemove = value;
-		//SetTransparent(0.0f);
-		//this.transform.gameObject.SetActive(false);
 	 }
 
 	 public void SetIndexes( int column, int row )

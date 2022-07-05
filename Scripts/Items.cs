@@ -12,56 +12,75 @@ public class Items : MonoBehaviour
 	   private Vector3 _startPosition;
 	   private Vector2 _scaleSprite;
 	   private Vector3 _currentPos;
-	   private float _sizeGrid;
-	   private float _countCells; 
+	   private float[] _sizeGrid;
+	   private float _countCellsRow; 
+	   private float _countCellsColumn; 
    	   private Vector2  _scaleItem;
-	   private float _deltaField = 0.5f;
+	   private float _deltaField = 1f;
+	   private float _deltaSpace = 0.1f;
 	   public Vector3[,] positionCells => _positionCells;
 	   public float sizeCellX => (_scaleSprite.x * _scaleItem.x);
 	   public float sizeCellY => (_scaleSprite.y * _scaleItem.y);
-	   public float countCells => _countCells;
-	   public float sizeGrid => _sizeGrid;
+	   public float countCellsRow => _countCellsRow;
+	   public float countCellsColumn => _countCellsColumn;
+	   public float sizeGridColumn => _sizeGrid[0];
+	   public float sizeGridRow => _sizeGrid[1];
 	   public Transform parentItem => _parentItem;
 	   public Vector2 scaleSprite => _scaleSprite;
 	   public Vector3 startPosition => _startPosition;
 
 	   private Vector2 GetScaleSprite
          ( Vector2 scaleSprite, Vector2 scaleItem, float sizeBorder, float numberColumn,
-		   float numberRow )  
+		   float numberRow, float scaleIndex )  
 	    { 
 			  scaleSprite = new Vector2(1f,1f);
-			  scaleSprite.x = (sizeBorder - _deltaField) / (numberColumn * scaleItem.x);
-	          scaleSprite.y = (sizeBorder - _deltaField) / (numberRow * scaleItem.y);
-			return scaleSprite;
+			  var width = numberColumn * scaleItem.x;
+			  var height = numberRow * scaleItem.y;
+			  var scaleX = sizeBorder / width;
+			  var scaleY = sizeBorder / height;
+			  var scale = Mathf.Min(scaleX,scaleY);
+			  var minSize = Mathf.Min(width,height);
+			  scaleSprite.x = scale;
+			  scaleSprite.y = scale;
+			  _deltaSpace = scale * 0.05f * scaleIndex;
+
+			  //_deltaSpace = 0;
+	  	  	  return scaleSprite;
 	    }
 
-	  public void Init( float sizeBorder, Vector2 positionItem, float countCells )
+	  public void Init( float sizeBorder, Vector2 positionItem, float countCellsColumn, float countCellsRow )
 	{
 		 CanvasScaler canvasScaler = _parentItem.gameObject.GetComponent<CanvasScaler>();
 		 var referencePixelsPerUnit = canvasScaler.referencePixelsPerUnit;
 		 var scaleIndex = referencePixelsPerUnit;
 	    _startPosition = positionItem;
 		 _scaleItem = new Vector2(scaleIndex,scaleIndex);
-	    _countCells = countCells;
+	    _countCellsRow = countCellsRow;
+		_countCellsColumn = countCellsColumn;
         _scaleSprite = GetScaleSprite( _scaleSprite, _scaleItem, sizeBorder, 
-		                               countCells, countCells );   
-	   _sizeGrid = _countCells * _scaleSprite.x * _scaleItem.x ;
-	   _startPosition.x -= _sizeGrid / 2 - _scaleSprite.x * _scaleItem.x / 2;
-	   _startPosition.y += _sizeGrid / 2 - _scaleSprite.y * _scaleItem.y / 2;
+		                               countCellsColumn, countCellsRow, scaleIndex );
+	   _sizeGrid = new float[2];
+	   _sizeGrid[0] = _countCellsColumn * _scaleSprite.x * _scaleItem.x ;
+	   _sizeGrid[1] = _countCellsRow * _scaleSprite.y * _scaleItem.y ;
+	   _startPosition.x -= _sizeGrid[0] / 2 - _scaleSprite.x * _scaleItem.x / 2 + _deltaSpace/2 * countCellsColumn;
+	   _startPosition.y += _sizeGrid[0] / 2 - _scaleSprite.y * _scaleItem.y / 2 - _deltaSpace/2 * countCellsRow;
 	   _currentPos = _startPosition;
-	   _playItems = new PlayItem[(int)_countCells, (int)_countCells];
-	   _positionCells = new Vector3[(int)_countCells, (int)_countCells];
+	   _playItems = new PlayItem[(int)_countCellsColumn, (int)_countCellsRow];
+	   _positionCells = new Vector3[(int)_countCellsColumn, (int)_countCellsRow];
 	   
-	   for( int j = 0; j < _countCells ; j++)
+	   
+	   for( int j = 0; j < _countCellsRow ; j++)
 	  {
 	     _currentPos.x = _startPosition.x;
 	     _currentPos.z = 0;
-	      for( int i = 0; i < _countCells ; i++ )
+	      for( int i = 0; i < _countCellsColumn ; i++ )
          {  
 			_playItems[i,j] = CreateItem( _parentItem, _currentPos, _scaleSprite, i, j );
 			_positionCells[i,j] = _playItems[i,j].transform.localPosition;
+			_currentPos.x += _deltaSpace;
 	        _currentPos.x += (_scaleSprite.x * _scaleItem.x);
 	     }
+		 _currentPos.y -= _deltaSpace;
 	     _currentPos.y -= (_scaleSprite.y * _scaleItem.y);
 	  }
 

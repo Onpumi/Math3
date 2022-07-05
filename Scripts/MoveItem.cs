@@ -85,13 +85,17 @@ public class MoveItem : MonoBehaviour
 	  private void OnEnable()
 	{
 	   _items = _gridItem._playItems;
-	   _countCells = _items.GetLength(0);
-	   _countEmptyItems = new int[_items.GetLength(0)];
-	   	spawnItems = new PlayItem[(int)_countCells,(int)_countCells];
+	  // _countCells = _items.GetLength(0);
 
-	  for( int j = 0 ; j < _countCells; j++ )	   
+		var countRow = _items.GetLength(1);
+		var countColumn = _items.GetLength(0);
+
+	   _countEmptyItems = new int[countColumn];
+	   	spawnItems = new PlayItem[countColumn,countRow];
+
+	  for( int j = 0 ; j < countRow; j++ )	   
 	  {
-	   for( int i = 0 ; i < _countCells; i++ )	   
+	   for( int i = 0 ; i < countColumn; i++ )	   
 	   {
 		 _items[i,j].mouseDown += PressItem;
 		 _items[i,j].mouseMove += MoveElement;
@@ -104,8 +108,8 @@ public class MoveItem : MonoBehaviour
 
 	private void OnDisable()
 	{
-	   for( int j = 0 ; j < _countCells; j++ )	   
-	   for( int i = 0 ; i < _countCells; i++ )	   
+	   for( int j = 0 ; j < _items.GetLength(1); j++ )	   
+	   for( int i = 0 ; i < _items.GetLength(0); i++ )	   
 	   {
 		 _items[i,j].mouseDown -= PressItem;
 		 _items[i,j].mouseMove -= MoveElement;
@@ -168,10 +172,11 @@ public class MoveItem : MonoBehaviour
 
 	 private void MoveElement( PlayItem item )
 	{ 
-		Debug.Log($"_isClick={_isClick} _firstItem.change={_firstItem.change} _secondItem.change={_secondItem.change} _stateGame.isPlay()={_stateGame.isPlay()}");
+	//	Debug.Log($"_isClick={_isClick} _firstItem.change={_firstItem.change} _secondItem.change={_secondItem.change} _stateGame.isPlay()={_stateGame.isPlay()}");
+	Debug.Log($" Индексы элемента {item.indexColumn},{item.indexRow}  Его имя {item.name} Его координаты {item.transform.position.x}, {item.transform.position.y}  IsRemove={item.isRemove}");
 		if(_stateGame.isPlay() == false || _isClick == false) return;
 
-//		Debug.Log($"Индексы элемента {item.indexColumn},{item.indexRow}  Его имя {item.name} Его координаты {item.transform.position.x}, {item.transform.position.y}  IsRemove={item.isRemove}");
+		
 
 		if( _firstItem.change == 1 && _firstItem != item  ) 
 	   {
@@ -189,12 +194,10 @@ public class MoveItem : MonoBehaviour
 	   }
 	}
 
-	  private bool ItNeighboor( PlayItem change, PlayItem target )
+	  private bool ItNeighboor( PlayItem itemFirst, PlayItem itemSecond )
 	{
-		var positionChange = change.transform.localPosition;
-		var positionTarget = target.transform.localPosition;
-	    var testX = ( Mathf.Abs(change.positionItem.x-target.positionItem.x) <= 0.5 ) && (change.positionItem.y == target.positionItem.y) ? (true) : (false);
-	    var testY = ( Mathf.Abs(change.positionItem.y-target.positionItem.y) <= 0.5 ) && (change.positionItem.x == target.positionItem.x) ? (true) : (false);
+		var testX = ( Mathf.Abs(itemFirst.indexColumn-itemSecond.indexColumn) == 1 ) ? (true) : (false);
+		var testY = ( Mathf.Abs(itemFirst.indexRow-itemSecond.indexRow) == 1 ) ? (true) : (false);
 		return testX || testY;
 	}
 
@@ -275,8 +278,9 @@ public class MoveItem : MonoBehaviour
 	{
 		int centerRow = centerItem.indexRow;
 		int centerColumn = centerItem.indexColumn;
-		int lengthRow = _items.GetLength(0);
-		PlayItem[] itemsHorizontal = Enumerable.Range(0,lengthRow).Select(x => _items[x,centerRow]).ToArray();
+		int lengthRow = _items.GetLength(1);
+		int lengthColumn = _items.GetLength(0);
+		PlayItem[] itemsHorizontal = Enumerable.Range(0,lengthColumn).Select(x => _items[x,centerRow]).ToArray();
 		PlayItem[] itemsVertical = Enumerable.Range(0,lengthRow).Select(y => _items[centerColumn,y]).ToArray();
 		return DeleteSeveralItems( itemsVertical, centerRow ) || DeleteSeveralItems( itemsHorizontal, centerColumn );
 	}
